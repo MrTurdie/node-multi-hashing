@@ -46,10 +46,16 @@
 // Parts of this file are originally copyright (c) 2012-2013, The Cryptonote developers
 
 #define CN_ADD_TARGETS_AND_HEADERS
-
-#include "../keccak.h"
-#include "aux_hash.h"
 #include "cn_slow_hash.hpp"
+
+extern "C"
+{
+#include "../crypto/c_keccak.h"
+#include "../crypto/c_jh.h"
+#include "../crypto/c_groestl.h"
+#include "../crypto/c_skein.h"
+#include "../crypto/c_blake256.h"
+}
 
 #ifdef HAS_INTEL_HW
 // sl_xor(a1 a2 a3 a4) = a1 (a2^a1) (a3^a2^a1) (a4^a3^a2^a1)
