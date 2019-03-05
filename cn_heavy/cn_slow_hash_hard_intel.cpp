@@ -1,35 +1,20 @@
 // Copyright (c) 2019, Ryo Currency Project
 //
-// Portions of this file are available under BSD-3 license. Please see ORIGINAL-LICENSE for details
 // All rights reserved.
 //
-// Authors and copyright holders give permission for following:
+// Redistribution and use in source and binary forms, with or without modification, are
+// permitted provided that the following conditions are met:
 //
-// 1. Redistribution and use in source and binary forms WITHOUT modification.
+// 1. Redistributions of source code must retain the above copyright notice, this list of
+//    conditions and the following disclaimer.
 //
-// 2. Modification of the source form for your own personal use.
+// 2. Redistributions in binary form must reproduce the above copyright notice, this list
+//    of conditions and the following disclaimer in the documentation and/or other
+//    materials provided with the distribution.
 //
-// As long as the following conditions are met:
-//
-// 3. You must not distribute modified copies of the work to third parties. This includes
-//    posting the work online, or hosting copies of the modified work for download.
-//
-// 4. Any derivative version of this work is also covered by this license, including point 8.
-//
-// 5. Neither the name of the copyright holders nor the names of the authors may be
+// 3. Neither the name of the copyright holder nor the names of its contributors may be
 //    used to endorse or promote products derived from this software without specific
 //    prior written permission.
-//
-// 6. You agree that this licence is governed by and shall be construed in accordance
-//    with the laws of England and Wales.
-//
-// 7. You agree to submit all disputes arising out of or in connection with this licence
-//    to the exclusive jurisdiction of the Courts of England and Wales.
-//
-// Authors and copyright holders agree that:
-//
-// 8. This licence expires and the work covered by it is released into the
-//    public domain on 1st of February 2020
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
 // EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -58,6 +43,9 @@ extern "C"
 }
 
 #ifdef HAS_INTEL_HW
+
+namespace cn_heavy {
+
 // sl_xor(a1 a2 a3 a4) = a1 (a2^a1) (a3^a2^a1) (a4^a3^a2^a1)
 inline __m128i sl_xor(__m128i tmp1)
 {
@@ -389,21 +377,21 @@ void cn_slow_hash<MEMORY, ITER, VERSION>::hardware_hash(const void* in, size_t l
 
 	implode_scratchpad_hard();
 
-	keccakf(spad.as_uqword());
+	keccakf(spad.as_uqword(), 24);
 
 	switch(spad.as_byte(0) & 3)
 	{
 	case 0:
-		blake256_hash(spad.as_byte(), (uint8_t*)out);
+		blake256_hash((uint8_t*)out, spad.as_byte(), 200);
 		break;
 	case 1:
-		groestl_hash(spad.as_byte(), (uint8_t*)out);
+		groestl(spad.as_byte(), 200 * 8, (uint8_t*)out);
 		break;
 	case 2:
-		jh_hash(spad.as_byte(), (uint8_t*)out);
+		jh_hash(32 * 8, spad.as_byte(), 8 * 200, (uint8_t*)out);
 		break;
 	case 3:
-		skein_hash(spad.as_byte(), (uint8_t*)out);
+		c_skein_hash(8 * 32, spad.as_byte(), 8 * 200, (uint8_t*)out);
 		break;
 	}
 }
@@ -598,7 +586,7 @@ void cn_slow_hash<MEMORY, ITER, VERSION>::hardware_hash_3(const void* in, size_t
 		inner_hash_3();
 	implode_scratchpad_hard();
 
-	keccakf(spad.as_uqword());
+	keccakf(spad.as_uqword(), 24);
 	memcpy(pout, spad.as_byte(), 32);
 }
 
@@ -614,11 +602,13 @@ void cn_slow_hash<MEMORY, ITER, VERSION>::software_hash_3(const void* in, size_t
 		inner_hash_3();
 	implode_scratchpad_soft();
 
-	keccakf(spad.as_uqword());
+	keccakf(spad.as_uqword(), 24);
 	memcpy(pout, spad.as_byte(), 32);
 }
 
 template class cn_v1_hash_t;
 template class cn_v2_hash_t;
 template class cn_v3_hash_t;
+
+} //cn_heavy namespace
 #endif
